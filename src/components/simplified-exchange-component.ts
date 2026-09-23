@@ -162,10 +162,7 @@ export class SimplifiedExchangeComponent {
 
     const selectEl = document.querySelector("#tokenSelect") as HTMLSelectElement | null;
     const selectedOption = selectEl?.selectedOptions[0];
-    amountLabel.textContent =
-      selectedOption?.dataset.symbol ??
-      selectedOption?.textContent?.trim() ??
-      (this._state.direction === "deposit" ? "LUSD" : "UUSD");
+    amountLabel.textContent = selectedOption?.dataset.symbol ?? selectedOption?.textContent?.trim() ?? (this._state.direction === "deposit" ? "LUSD" : "UUSD");
   }
 
   private _renderTokenOptions() {
@@ -287,15 +284,13 @@ export class SimplifiedExchangeComponent {
       }
     });
 
-    const restoredOption = [...selectEl.options].find(
-      (option) => option.value.toLowerCase() === previousValue.toLowerCase()
-    );
+    const restoredOption = [...selectEl.options].find((option) => option.value.toLowerCase() === previousValue.toLowerCase());
     if (restoredOption) {
       selectEl.value = restoredOption.value;
     }
 
     this._updateAmountLabel();
-}
+  }
 
   /**
    * Load protocol settings and determine available options
