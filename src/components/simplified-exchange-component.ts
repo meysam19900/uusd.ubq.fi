@@ -154,12 +154,28 @@ export class SimplifiedExchangeComponent {
     }
   }
 
+  private _updateAmountLabel() {
+    const amountLabel = document.getElementById("amountLabel");
+    if (!amountLabel) {
+      return;
+    }
+
+    const selectEl = document.querySelector("#tokenSelect") as HTMLSelectElement | null;
+    const selectedOption = selectEl?.selectedOptions[0];
+    amountLabel.textContent =
+      selectedOption?.dataset.symbol ??
+      selectedOption?.textContent?.trim() ??
+      (this._state.direction === "deposit" ? "LUSD" : "UUSD");
+  }
+
   private _renderTokenOptions() {
     const refreshData = this._services.centralizedRefreshService.getLastData();
     const selectEl = document.querySelector("#tokenSelect") as HTMLSelectElement;
     if (!selectEl) {
       return;
     }
+
+    const previousValue = selectEl.value;
     const yourTokenGroup = document.getElementById("yourTokenGroup") as HTMLOptGroupElement;
     const otherTokenGroup = document.getElementById("otherTokenGroup") as HTMLOptGroupElement;
 
@@ -270,7 +286,16 @@ export class SimplifiedExchangeComponent {
         this._renderOptions();
       }
     });
-  }
+
+    const restoredOption = [...selectEl.options].find(
+      (option) => option.value.toLowerCase() === previousValue.toLowerCase()
+    );
+    if (restoredOption) {
+      selectEl.value = restoredOption.value;
+    }
+
+    this._updateAmountLabel();
+}
 
   /**
    * Load protocol settings and determine available options
@@ -622,9 +647,7 @@ export class SimplifiedExchangeComponent {
     const amountLabel = document.getElementById("amountLabel");
     const amountInput = document.getElementById("exchangeAmount") as HTMLInputElement;
 
-    if (amountLabel) {
-      amountLabel.textContent = this._state.direction === "deposit" ? "LUSD" : "UUSD";
-    }
+    this._updateAmountLabel();
 
     if (amountInput) {
       if (isBalancesLoading) {
