@@ -172,7 +172,9 @@ export class CentralizedRefreshService {
       const diamondMulticallData = await this._fetchDiamondData(publicClient);
 
       // BATCH 2: Token balances (only if wallet connected)
-      const tokenBalancesData = account ? await this._fetchTokenBalances(publicClient, account) : null;
+      const fetchedTokenBalances = account ? await this._fetchTokenBalances(publicClient, account) : null;
+      const tokenBalancesData =
+        account && fetchedTokenBalances?.length === 0 && this._lastData?.tokenBalances?.length ? this._lastData.tokenBalances : fetchedTokenBalances;
 
       // BATCH 3: Price thresholds (storage reads only - use price service for Curve data)
       const priceThresholds = await this._services.priceService.getPriceThresholdService().getPriceThresholds();

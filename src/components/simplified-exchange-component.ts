@@ -243,6 +243,13 @@ export class SimplifiedExchangeComponent {
         opt.remove();
       }
     });
+
+    if (previousValue) {
+      const restoredOption = [...selectEl.options].find((option) => option.value.toLowerCase() === previousValue.toLowerCase());
+      if (restoredOption) {
+        selectEl.value = restoredOption.value;
+      }
+    }
   }
 
   /**
@@ -283,11 +290,6 @@ export class SimplifiedExchangeComponent {
         this._renderOptions();
       }
     });
-
-    const restoredOption = [...selectEl.options].find((option) => option.value.toLowerCase() === previousValue.toLowerCase());
-    if (restoredOption) {
-      selectEl.value = restoredOption.value;
-    }
 
     this._updateAmountLabel();
   }
@@ -639,7 +641,6 @@ export class SimplifiedExchangeComponent {
     }
 
     // Update input label
-    const amountLabel = document.getElementById("amountLabel");
     const amountInput = document.getElementById("exchangeAmount") as HTMLInputElement;
 
     this._updateAmountLabel();
