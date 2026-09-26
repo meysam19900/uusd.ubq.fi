@@ -154,12 +154,28 @@ export class SimplifiedExchangeComponent {
     }
   }
 
+  private _syncAmountLabelWithSelection() {
+    const amountLabel = document.getElementById("amountLabel");
+    if (!amountLabel) return;
+    if (this._state.direction === "withdraw") {
+      amountLabel.textContent = "UUSD";
+      return;
+    }
+    try {
+      const selected = this._getSelectedToken();
+      amountLabel.textContent = selected.symbol || "LUSD";
+    } catch {
+      amountLabel.textContent = "LUSD";
+    }
+  }
+
   private _renderTokenOptions() {
     const refreshData = this._services.centralizedRefreshService.getLastData();
     const selectEl = document.querySelector("#tokenSelect") as HTMLSelectElement;
     if (!selectEl) {
       return;
     }
+    const prevSelectedAddress = (selectEl.value || "").toLowerCase();
     const yourTokenGroup = document.getElementById("yourTokenGroup") as HTMLOptGroupElement;
     const otherTokenGroup = document.getElementById("otherTokenGroup") as HTMLOptGroupElement;
 
@@ -230,6 +246,18 @@ export class SimplifiedExchangeComponent {
         opt.remove();
       }
     });
+
+    if (prevSelectedAddress) {
+      const match = [...selectEl.options].find((o) => (o.value || "").toLowerCase() === prevSelectedAddress);
+      if (match) {
+        selectEl.value = match.value;
+      }
+    }
+    if (!selectEl.value && selectEl.options.length > 0) {
+      const lusdOpt = [...selectEl.options].find((o) => areAddressesEqual(o.value as Address, INVENTORY_TOKENS.LUSD.address));
+      selectEl.value = lusdOpt?.value ?? selectEl.options[0].value;
+    }
+    this._syncAmountLabelWithSelection();
   }
 
   /**
@@ -451,12 +479,13 @@ export class SimplifiedExchangeComponent {
   }
 
   private _handleTokenSelect(_event: Event) {
-    if (this._state.direction === "deposit") {
-      const amountInput = document.getElementById("exchangeAmount") as HTMLInputElement;
-      amountInput.value = "";
-      this._state.amount = "";
+    // Preserve amount entry across token selection changes (Issue #92)
+    const amountInput = document.getElementById("exchangeAmount") as HTMLInputElement | null;
+    if (amountInput) {
+      this._state.amount = amountInput.value || "";
     }
     this._services.notificationManager.clearNotifications("exchange");
+    this._syncAmountLabelWithSelection();
     void this._render();
     void this._calculateRoute();
   }
@@ -619,12 +648,9 @@ export class SimplifiedExchangeComponent {
     }
 
     // Update input label
-    const amountLabel = document.getElementById("amountLabel");
     const amountInput = document.getElementById("exchangeAmount") as HTMLInputElement;
 
-    if (amountLabel) {
-      amountLabel.textContent = this._state.direction === "deposit" ? "LUSD" : "UUSD";
-    }
+    this._syncAmountLabelWithSelection();
 
     if (amountInput) {
       if (isBalancesLoading) {
@@ -1140,8 +1166,12 @@ export class SimplifiedExchangeComponent {
       return;
     }
 
-    // Only auto-populate if input is empty or zero
-    if (amountInput.value && amountInput.value !== "" && amountInput.value !== "0") return;
+    // Only auto-populate if BOTH the input and state are empty/zero.
+    // This prevents overwriting the user's typed amount during balance refresh/rerender.
+    const currentInputValue = (amountInput.value || "").trim();
+    const currentStateValue = (this._state.amount || "").trim();
+    const hasUserAmount = (currentInputValue !== "" && currentInputValue !== "0") || (currentStateValue !== "" && currentStateValue !== "0");
+    if (hasUserAmount) return;
 
     try {
       const selectedToken = this._state.direction === "deposit" ? this._getSelectedToken() : INVENTORY_TOKENS.UUSD;
