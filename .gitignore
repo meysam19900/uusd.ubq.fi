@@ -183,4 +183,12 @@ app.js.map
 public/.well-known/appspecific/com.chrome.devtools.json
 .uuid
 
-tmp/
+tmp/.cdp_isolated_profile/
+*.bak
+*.log
+*.tmp
+node_modules/
+.venv/
+.aegisara_audit/
+hunt_workspace/
+.github_token
